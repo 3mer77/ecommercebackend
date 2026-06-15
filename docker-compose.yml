@@ -1,0 +1,70 @@
+version: '3.8'
+
+services:
+  # PostgreSQL Database
+  postgres:
+    image: postgres:16-alpine
+    container_name: ecommerce-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ecommerce
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: mysecretpassword
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  # Redis Cache
+  redis:
+    image: redis:7-alpine
+    container_name: ecommerce-redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    command: redis-server --appendonly yes
+
+  # Your API (uncomment when ready to Dockerize)
+  # api:
+  #   build: .
+  #   container_name: ecommerce-api
+  #   restart: unless-stopped
+  #   ports:
+  #     - "3000:3000"
+  #   environment:
+  #     - DB_HOST=postgres
+  #     - DB_PORT=5432
+  #     - DB_NAME=ecommerce
+  #     - DB_USER=postgres
+  #     - DB_PASSWORD=mysecretpassword
+  #     - REDIS_HOST=redis
+  #     - REDIS_PORT=6379
+  #   depends_on:
+  #     postgres:
+  #       condition: service_healthy
+  #     redis:
+  #       condition: service_started
+
+  # Load Testing
+  k6:
+    image: grafana/k6
+    container_name: ecommerce-k6
+    volumes:
+      - ./test/k6:/scripts
+    command: run /scripts/products-test.js
+    depends_on:
+      - postgres
+      - redis
+    profiles:
+      - testing  # Only runs when you specify: docker-compose --profile testing up
+
+volumes:
+  postgres_data:
+  redis_data:
