@@ -22,6 +22,10 @@ const swaggerDefinition = {
             url: 'http://localhost:3000/api/v1',
             description: 'Development Server',
         },
+        {
+            url: 'https://ecommercebackend-mido.onrender.com/api/v1',
+            description: 'Production Server',
+        },
     ],
     components: {
         securitySchemes: {
