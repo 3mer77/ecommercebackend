@@ -197,7 +197,7 @@ router.post('/',
 /**
  * @swagger
  * /products/{id}:
- *   put:
+ *   patch:
  *     summary: Update product (Admin)
  *     tags: [Products]
  *     security:
@@ -212,7 +212,7 @@ router.post('/',
  *       200:
  *         description: Product updated
  */
-router.put('/:id',
+router.patch('/:id',
     authenticate,
     authorize('admin'),
     productController.update

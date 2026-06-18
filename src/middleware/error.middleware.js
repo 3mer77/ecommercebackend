@@ -37,6 +37,12 @@ const errorHandler = (err, req, res, next) => {
         user: req.user?.id          // Which user (if logged in)
     });
 
+
+    // If error has a statusCode property, use it!
+    if (err.statusCode) {
+        return ResponseHandler.error(res, err.message, err.statusCode);
+    }
+
     // ──────────────────────────────────────
     // DATABASE ERRORS (PostgreSQL specific)
     // ──────────────────────────────────────

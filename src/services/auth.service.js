@@ -95,88 +95,53 @@ class AuthService {
      * 7. Return user data + tokens
      */
     async login({ email, password }) {
-        try {
-            // CHECK REDIS CACHE FIRST
-            const cacheKey = `login:${email}`;
-            const cachedUser = await redis.get(cacheKey);
+        // NO CACHE FOR LOGIN - Security first!
+        console.log('🐌 Login from DATABASE:', email);
 
-            if (cachedUser) {
-                const user = JSON.parse(cachedUser);
-                const accessToken = jwtService.generateAccessToken(user);
-                const refreshToken = jwtService.generateRefreshToken(user);
+        const user = await userModel.findByEmail(email);
+        if (!user) {
+            throw Object.assign(new Error('Invalid email or password'), { statusCode: 401 });
+        }
 
-                console.log('⚡ Login from CACHE:', email);
+        if (user.locked_until && new Date(user.locked_until) > new Date()) {
+            const minutesLeft = Math.ceil((new Date(user.locked_until) - new Date()) / 60000);
+            throw Object.assign(
+                new Error(`Account is locked. Please try again in ${minutesLeft} minutes.`),
+                { statusCode: 423 }
+            );
+        }
 
-                return {
-                    user: {
-                        id: user.id,
-                        email: user.email,
-                        username: user.username,
-                        full_name: user.full_name,
-                        avatar_url: user.avatar_url,
-                        role: user.role
-                    },
-                    accessToken,
-                    refreshToken
-                };
-            }
+        if (!user.password_hash) {
+            throw Object.assign(
+                new Error('This account uses Google Sign-In. Please login with Google.'),
+                { statusCode: 400 }
+            );
+        }
 
-            // NORMAL LOGIN (cache miss)
-            console.log('🐌 Login from DATABASE:', email);
+        const isPasswordValid = await bcrypt.compare(password, user.password_hash);
+        if (!isPasswordValid) {
+            await userModel.incrementLoginAttempts(user.id);
+            throw Object.assign(new Error('Invalid email or password'), { statusCode: 401 });
+        }
 
-            const user = await userModel.findByEmail(email);
-            if (!user) {
-                throw Object.assign(new Error('Invalid email or password'), { statusCode: 401 });
-            }
+        await userModel.updateLastLogin(user.id);
 
-            if (user.locked_until && new Date(user.locked_until) > new Date()) {
-                const minutesLeft = Math.ceil((new Date(user.locked_until) - new Date()) / 60000);
-                throw Object.assign(
-                    new Error(`Account is locked. Please try again in ${minutesLeft} minutes.`),
-                    { statusCode: 423 }
-                );
-            }
+        const accessToken = jwtService.generateAccessToken(user);
+        const refreshToken = jwtService.generateRefreshToken(user);
+        await userModel.updateRefreshToken(user.id, refreshToken);
 
-            if (!user.password_hash) {
-                throw Object.assign(
-                    new Error('This account uses Google Sign-In. Please login with Google.'),
-                    { statusCode: 400 }
-                );
-            }
-
-            const isPasswordValid = await bcrypt.compare(password, user.password_hash);
-            if (!isPasswordValid) {
-                await userModel.incrementLoginAttempts(user.id);
-                throw Object.assign(new Error('Invalid email or password'), { statusCode: 401 });
-            }
-
-            await userModel.updateLastLogin(user.id);
-
-            const accessToken = jwtService.generateAccessToken(user);
-            const refreshToken = jwtService.generateRefreshToken(user);
-            await userModel.updateRefreshToken(user.id, refreshToken);
-
-            // SAVE TO CACHE (5 minutes)
-            const userForCache = {
+        return {
+            user: {
                 id: user.id,
                 email: user.email,
                 username: user.username,
                 full_name: user.full_name,
                 avatar_url: user.avatar_url,
-                role: user.user_role
-            };
-
-            await redis.setex(cacheKey, 300, JSON.stringify(userForCache));
-
-            return {
-                user: userForCache,
-                accessToken,
-                refreshToken
-            };
-
-        } catch (error) {
-            throw error;
-        }
+                user_role: user.user_role
+            },
+            accessToken,
+            refreshToken
+        };
     }
 
     /**
@@ -186,26 +151,29 @@ class AuthService {
      * to get a new access token without logging in again
      */
     async refreshAccessToken(refreshToken) {
-        // Verify refresh token
-        const decoded = jwtService.verifyRefreshToken(refreshToken);
+        try {
+            const decoded = jwtService.verifyRefreshToken(refreshToken);
+            const user = await userModel.findById(decoded.userId);
 
-        // Find user
-        const user = await userModel.findById(decoded.userId);
-        if (!user) {
-            throw Object.assign(new Error('User not found'), { statusCode: 401 });
+            if (!user) {
+                throw Object.assign(new Error('User not found'), { statusCode: 401 });
+            }
+
+            const newAccessToken = jwtService.generateAccessToken(user);
+            const newRefreshToken = jwtService.generateRefreshToken(user);
+            await userModel.updateRefreshToken(user.id, newRefreshToken);
+
+            return {
+                accessToken: newAccessToken,
+                refreshToken: newRefreshToken
+            };
+        } catch (error) {
+            // ADD THIS: Ensure it always throws with 401 status
+            throw Object.assign(
+                new Error(error.message || 'Invalid refresh token'),
+                { statusCode: 401 }
+            );
         }
-
-        // Generate new tokens
-        const newAccessToken = jwtService.generateAccessToken(user);
-        const newRefreshToken = jwtService.generateRefreshToken(user);
-
-        // Update refresh token in database (old one becomes invalid)
-        await userModel.updateRefreshToken(user.id, newRefreshToken);
-
-        return {
-            accessToken: newAccessToken,
-            refreshToken: newRefreshToken
-        };
     }
 
     /**
