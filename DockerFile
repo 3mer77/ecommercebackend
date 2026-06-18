@@ -1,0 +1,20 @@
+FROM node:18-alpine
+# "Start with Node.js 18 on Alpine Linux (small Linux)"
+
+WORKDIR /app
+# "Put everything in the /app folder"
+
+COPY package*.json ./
+# "Copy package.json to the container"
+
+RUN npm ci --only=production
+# "Install ONLY production dependencies (no devDependencies)"
+
+COPY . .
+# "Copy all my code into the container"
+
+EXPOSE 3000
+# "My app runs on port 3000"
+
+CMD ["node", "src/app.js"]
+# "Start my app"
