@@ -6,6 +6,7 @@ const ResponseHandler = require('../../utils/response');
 const authRoutes = require('./auth.routes');
 const productRoutes = require('./product.routes');
 const cartRoutes = require('./cart.routes');
+const orderRoutes = require('./order.routes');
 
 router.get('/', (req, res) => {
     ResponseHandler.success(res, {
@@ -18,5 +19,6 @@ router.get('/', (req, res) => {
 router.use('/auth', authRoutes);
 router.use('/products', productRoutes);
 router.use('/cart', cartRoutes);
+router.use('/orders', orderRoutes);
 
 module.exports = router;

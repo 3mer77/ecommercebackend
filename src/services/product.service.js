@@ -43,7 +43,6 @@ class ProductService {
             }
 
             // Cache miss - query database
-            console.log('🐌 Products from DATABASE');
             const result = await productModel.findAll({
                 page, limit, category, sort, minPrice, maxPrice, inStock
             });
@@ -58,7 +57,6 @@ class ProductService {
 
             // Save to cache for 10 minutes (600 seconds)
             await redis.setex(cacheKey, 600, JSON.stringify(result));
-            console.log('💾 Products cached for 10 minutes');
 
             return result;
 
@@ -123,7 +121,7 @@ class ProductService {
                 return JSON.parse(cached);
             }
 
-            console.log('🐌 Search from DATABASE');
+        
             const result = await productModel.search(searchTerm, {
                 page: safePage,
                 limit: safeLimit
@@ -282,11 +280,11 @@ class ProductService {
             const cached = await redis.get(cacheKey);
 
             if (cached) {
-                console.log('⚡ Categories from CACHE');
+                console.log('Categories from CACHE');
                 return { categories: JSON.parse(cached) };
             }
 
-            console.log('🐌 Categories from DATABASE');
+           
             const categories = await categoryModel.findAll();
 
             // Cache for 1 hour (categories rarely change)
@@ -336,7 +334,7 @@ class ProductService {
             const keys = await redis.keys('products:list:*');
             if (keys.length > 0) {
                 await redis.del(keys);
-                console.log(`🧹 Cleared ${keys.length} product cache keys`);
+                console.log(`Cleared ${keys.length} product cache keys`);
             }
         } catch (error) {
             console.error('Error clearing cache:', error.message);

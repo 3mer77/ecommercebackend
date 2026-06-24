@@ -4,7 +4,9 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "jest --runInBand --detectOpenHandles --forceExit",
+    "test": "jest tests/unit --runInBand --forceExit",
+    "test:integration": "jest tests/integration --runInBand --forceExit",
+    "test:all": "jest --runInBand --forceExit",
     "start": "node src/app.js",
     "dev": "nodemon src/app.js",
     "db:migrate": "node src/database/migrate.js"
