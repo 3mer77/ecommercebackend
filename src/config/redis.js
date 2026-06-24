@@ -7,7 +7,7 @@ const redis = new Redis({
     tls: process.env.REDIS_HOST?.includes('upstash') ? {} : undefined,
     retryStrategy: (times) => {
         if (times > 3) {
-            console.error('❌ Redis connection failed after 3 retries');
+            console.error(' Redis connection failed after 3 retries');
             return null;
         }
         return Math.min(times * 200, 2000);
@@ -16,11 +16,11 @@ const redis = new Redis({
 });
 
 redis.on('connect', () => {
-    console.log('✅ Redis connected');
+    console.log(' Redis connected');
 });
 
 redis.on('error', (err) => {
-    console.error('❌ Redis error:', err.message);
+    console.error(' Redis error:', err.message);
 });
 
 module.exports = redis;
