@@ -2,7 +2,6 @@
 const nodemailer = require('nodemailer');
 
 const transporter = nodemailer.createTransport({
-    service: 'gmail',
     host: 'smtp.gmail.com',
     port: 587,
     secure: false,
@@ -13,14 +12,16 @@ const transporter = nodemailer.createTransport({
     tls: {
         rejectUnauthorized: false,
     },
+    // Force IPv4 — Render's free tier can't reach Gmail over IPv6
+    family: 4,
 });
 
 // Test connection
 transporter.verify((error, success) => {
     if (error) {
-        console.error('❌ Email service failed:', error.message);
+        console.error(' Email service failed:', error.message);
     } else {
-        console.log('✅ Email service ready');
+        console.log(' Email service ready');
     }
 });
 
