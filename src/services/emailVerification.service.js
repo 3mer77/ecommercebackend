@@ -58,7 +58,7 @@ class EmailVerificationService {
     return { 
       message: 'OTP sent to your email',
       // Only include OTP in development for testing
-      ...(process.env.NODE_ENV !== 'production' ? { demoOtp: otp } : {})
+      
     };
   }
 

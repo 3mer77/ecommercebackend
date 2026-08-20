@@ -18,6 +18,11 @@ const routes = require('./routes/v1');
 
 // Create Express application
 const app = express();
+
+// Trust proxy - REQUIRED for cloud deployment (Render/Heroku/AWS)
+app.set('trust proxy', 1);
+
+
 const PORT = process.env.PORT || 3000;
 
 // ──────────────────────────────────────
