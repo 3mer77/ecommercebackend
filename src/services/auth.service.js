@@ -74,7 +74,8 @@ class AuthService {
                 email: user.email,
                 username: user.username,
                 full_name: user.full_name,
-                role: user.user_role,
+                role: user.role,
+                email_verified: false,
                 created_at: user.created_at
             },
             accessToken,
@@ -137,7 +138,8 @@ class AuthService {
                 username: user.username,
                 full_name: user.full_name,
                 avatar_url: user.avatar_url,
-                user_role: user.user_role
+                user_role: user.user_role,
+                email_verified: user.email_verified || false,  
             },
             accessToken,
             refreshToken

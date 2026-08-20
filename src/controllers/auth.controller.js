@@ -14,6 +14,7 @@
 
 const authService = require('../services/auth.service');
 const ResponseHandler = require('../utils/response');
+const emailVerificationService = require('../services/emailVerification.service');
 
 class AuthController {
 
@@ -131,6 +132,37 @@ class AuthController {
             // Or return JSON for API clients
             return ResponseHandler.success(res, result, 'Google authentication successful');
 
+        } catch (error) {
+            next(error);
+        }
+    }
+
+    async sendVerificationOtp(req, res, next) {
+        try {
+            const result = await emailVerificationService.sendVerificationOtp(
+                req.user.id,
+                req.user.email
+            );
+            return ResponseHandler.success(res, result, 'OTP sent');
+        } catch (error) {
+            next(error);
+        }
+    }
+
+    async verifyEmailOtp(req, res, next) {
+        try {
+            const { otp } = req.body;
+            const result = await emailVerificationService.verifyEmailOtp(req.user.id, otp);
+            return ResponseHandler.success(res, result, 'Email verified');
+        } catch (error) {
+            next(error);
+        }
+    }
+
+    async resendOtp(req, res, next) {
+        try {
+            const result = await emailVerificationService.resendOtp(req.user.id, req.user.email);
+            return ResponseHandler.success(res, result, 'OTP resent');
         } catch (error) {
             next(error);
         }

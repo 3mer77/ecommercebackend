@@ -295,7 +295,21 @@ class UserModel {
         const result = await db.query(query, [id]);
         return result.rows[0];
     }
+
+    //email verfication
+    async verifyEmail(userId) {
+      const query = `
+        UPDATE users 
+        SET email_verified = true, updated_at = NOW()
+        WHERE id = $1
+        RETURNING id, email, email_verified
+      `;
+      const result = await db.query(query, [userId]);
+      return result.rows[0];
+    }
 }
+
+
 
 // Export a single instance
 module.exports = new UserModel();

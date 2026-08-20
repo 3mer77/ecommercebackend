@@ -9,6 +9,7 @@ const express = require('express');
 const router = express.Router();
 const authController = require('../../controllers/auth.controller');
 const { authenticate } = require('../../middleware/auth.middleware');
+
 const {
     registerValidation,
     loginValidation,
@@ -190,5 +191,9 @@ router.get('/profile', authenticate, authController.getProfile);
  *         description: Not authenticated
  */
 router.post('/logout', authenticate, authController.logout);
+
+router.post('/send-verification-otp', authenticate, authController.sendVerificationOtp);
+router.post('/verify-email', authenticate, authController.verifyEmailOtp);
+router.post('/resend-otp', authenticate, authController.resendOtp);
 
 module.exports = router;
